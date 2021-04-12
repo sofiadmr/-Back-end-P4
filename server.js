@@ -1,8 +1,10 @@
+'use strict';
+
 // Declarar librerias
 const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
-const usersRoute = require('./routes/usersRoute');
+const usersRoute = require('./routes');
 
 //load middleware
 app.use(express.json());
