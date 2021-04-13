@@ -39,7 +39,12 @@ router.post('/api/login/', (req, res) => {
     }
 });
 
-router.get('/api/users/', (req, res) => {});
+router.get('/api/users/', (req, res) => {
+    const nombre = (!req.query.nombre) ? "" : req.query.nombre;
+
+    const listUserFilter = usersCtrl.filterUserbyName(nombre);
+    res.status(200).send(listUserFilter);
+});
 
 router.post('/api/users/', (req, res) => {
     let atributos = '';
@@ -71,24 +76,82 @@ router.post('/api/users/', (req, res) => {
                 uid: "",
                 nombre: req.body.nombre,
                 apellido: req.body.apellido,
-                email: req.body.email,
+                correo: req.body.correo,
                 fecha: req.body.fecha,
                 sexo: req.body.sexo,
                 password: req.body.password,
                 image: ""
             }
             res.status(201).send(usersCtrl.insertUser(newUser));
-        }
-        else {
+        } else {
             res.status(400).send('Bad Request : format of sexo (H o M)');
         }
     }
 });
 
-router.get('/api/users/:email', (req, res) => {});
+router.get('/api/users/:email', (req, res) => {
+    const correo = req.params.email;
+    const user = usersCtrl.getUserbyEmail(correo);
+    if (user === undefined)
+        res.status(400).send("Bad Request : user not found");
+    else
+        res.status(200).send(user);
 
-router.put('/api/users/:email', (req, res) => {});
+});
 
-router.delete('/api/users/:email', (req, res) => {});
+router.put('/api/users/:email', (req, res) => {
+    let atributos = '';
+    const correo = req.params.email;
+    const user = usersCtrl.getUserbyEmail(correo);
+    if (user === undefined)
+        res.status(400).send("Bad Request : user not found");
+    else {
+        if (!req.body.nombre) {
+            atributos += 'nombre ';
+        }
+        if (!req.body.apellido) {
+            atributos += 'apellido ';
+        }
+        if (!req.body.password) {
+            atributos += 'password ';
+        }
+        if (!req.body.fecha) {
+            atributos += 'fecha';
+        }
+        if (atributos !== '') {
+            res.status(400);
+            res.send(`Bad Request : is required ${atributos}`);
+        } else {
+            let updateUser = {
+                uid: user.uid,
+                nombre: req.body.nombre,
+                apellido: req.body.apellido,
+                correo: user.correo,
+                fecha: req.body.fecha,
+                sexo: user.sexo,
+                password: req.body.password,
+                image: user.image
+            }
+            const result = usersCtrl.updateUser(updateUser);
+            if (result === undefined)
+                res.status(404).send(`Bad Request : fail update`);
+            else
+                res.status(200).send(result);
+        }
+    }
+});
+
+router.delete('/api/users/:email', (req, res) => {
+    const correo = req.params.email;
+    const user = usersCtrl.getUserbyEmail(correo);
+    if (user === undefined)
+        res.status(400).send("Bad Request : user not found");
+    else {
+        if(usersCtrl.deleteUser(correo))
+            res.status(200).send(`Successfull : user deleted`);
+        else
+        res.status(404).send(`Bad Request : fail delete`); 
+    }
+});
 
 module.exports = router;
